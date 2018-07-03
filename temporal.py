@@ -7,17 +7,19 @@ import glob
 
 def read(name):
 	#read from file
+    # faz a leitura de todos os arquivos da pasta
     files = glob.glob(name)
-#    for i in files:
-    
-        
-    inputArray = pd.DataFrame(np.loadtxt(name), columns=['x', 'y', 'R', 'phi', 'ex', 'ey', 'ez', 'bx', 'by', 'bz'])
-    f = open(name,'r')
-    
-    
+    files.sort()
+    inputArray = []
+    # armazena em uma lista os data frames para cada passo temporal
+    for i in files:
+        inputArray.append(pd.DataFrame(np.loadtxt(i), columns=['x', 'y', 'R', 'phi', 'ex', 'ey', 'ez', 'bx', 'by', 'bz']))
+#    f = open(name,'r')
+
+
 #	lines = f.readlines()
 #
-#	#split into columns 
+#	#split into columns
 #	lineSize = len(lines)
 #
 #	if lineSize!=sizePhi:
@@ -65,7 +67,7 @@ def coordTransform(data,phi):
 		A[2,0] = 0.
 		A[2,1] = 0.
 		A[2,2] = 1.
-        
+
 		for l in range(3):
 			temp = 0
 			for k in range(3):
@@ -81,20 +83,20 @@ def integ(y,x,m):
     for i in range(sizePhi):
         a[i] = y[i] * np.sin(m * x[i])
         b[i] = y[i] * np.cos(m * x[i])
-        	
+
     resultA = integrate.simps(a,x)
     resultB = integrate.simps(b,x)
-    
+
     return ([resultA, resultB])
 
 # Fourier series.
 def Sf(inte, phi):
     a0 = inte[0][1]
     sum = np.zeros(len(phi))
-    for j in range(0,len(phi)):      
+    for j in range(0,len(phi)):
         for i in np.arange(1, len(inte)):
             sum[j] += (inte[i][0] * np.sin(i*phi[j])) + (inte[i][1] * np.cos(i*phi[j]))
-    
+
     return ((a0/2 + sum)/(np.pi))
 
 #
@@ -108,53 +110,77 @@ def Sf(inte, phi):
 #
 ##    dt = (tt[1] - tt[0]).total_seconds() # passo 1 segundo
 ##    tt = ss[0].index # array tempo
-#    
+#
 #    # Compute the fft.
 #    yf = scipy.fftpack.fft(xx,n=N_fft)
 #    xf = (np.arange(0,fny,fny/N_fft))
 #    psd = (np.abs(yf) ** 2)
-#    
+#
 #    return ([psd, xf])
 
 def main():
     inpArray = read(filename)
-    
-    R = 8.0
+    R = 4.5
+    Intt = []
+    # loop para gerar os coeficientes para cada passo temporal
+    for i in inpArray:
+        dda = np.transpose(np.asarray([i[i['R']==R]['ex'].values, i[i['R']==R]['ey'].values, i[i['R']==R]['ez'].values]))
+        Electric = coordTransform(dda, i[i['R']==R]['phi'].values)
+        inte = []
+        for m in range(0,50):
+            inte.append(integ(Electric[:,1], i[i['R']==R]['phi'].values, m))
+        Intt.append(np.asmatrix(inte))
+
+
+    # organiza os coeficientes em uma matrix com valores de m versus tempo
+    aa = np.zeros((50, 50))
+    for k in range(0,len(Intt)):
+        for i in range(0,len(np.asarray(Intt[k][:,1]))):
+            aa[k,i] = np.asarray(Intt[k][i,1])
+
+    plt.pcolormesh(np.log(abs(np.transpose(aa))), cmap='jet')
+    plt.xlabel('time')
+    plt.ylabel('m')
+    plt.colorbar()
+    plt.savefig('b_testeR'+str(R)+'.png')
+
+
+
+##
+#    data = np.transpose(np.asarray([inpArray[inpArray['R']==R]['ex'].values, inpArray[inpArray['R']==R]['ey'].values, inpArray[inpArray['R']==R]['ez'].values]))
 #
-    data = np.transpose(np.asarray([inpArray[inpArray['R']==R]['ex'].values, inpArray[inpArray['R']==R]['ey'].values, inpArray[inpArray['R']==R]['ez'].values]))
-    
-    Electric = coordTransform(data, inpArray[inpArray['R']==R]['phi'].values)
-    
-#    
-##    inte  = integ(data[:,1], dim[:,1], 1)
-#    
-    a0 = integ(data[:,1], dim[:,1], 0)[1]
-#    
-    inte = []
-    for m in range(0,1):
-        inte.append(integ(Electric[:,1], inpArray[inpArray['R']==R]['phi'].values, m))
-        
-#    inte.append(integ(Electric[:,1], inpArray[inpArray['R']==R]['phi'].values, 1))
-
-    serie  = Sf(inte, inpArray[inpArray['R']==R]['phi'].values)
-#    0
-    print (len(serie), serie.size)
-#    
-#    plt.semilogy(a[1], a[0])
-#    
-
-#   
-    
-    plt.plot(inpArray[inpArray['R']==R]['phi'].values,abs((Electric[:,1] - serie)), label='1')
-#    
-#    plt.plot(inpArray[inpArray['R']==R]['phi'].values, serie, label='2')
-    plt.legend()
+#    Electric = coordTransform(data, inpArray[inpArray['R']==R]['phi'].values)
+#
+##
+###    inte  = integ(data[:,1], dim[:,1], 1)
+##
+##    a0 = integ(data[:,1], dim[:,1], 0)[1]
+##
+#    inte = []
+#    for m in range(0,20):
+#        inte.append(integ(Electric[:,1], inpArray[inpArray['R']==R]['phi'].values, m))
+#
+##    inte.append(integ(Electric[:,1], inpArray[inpArray['R']==R]['phi'].values, 1))
+#
+#    serie  = Sf(inte, inpArray[inpArray['R']==R]['phi'].values)
+##    0
+#    print (len(serie), serie.size)
+##
+##    plt.semilogy(a[1], a[0])
+##
+#
+##
+#
+#    plt.plot(inpArray[inpArray['R']==R]['phi'].values,abs((Electric[:,1] - serie)), label='1')
+##
+##    plt.plot(inpArray[inpArray['R']==R]['phi'].values, serie, label='2')
+#    plt.legend()
 #    plt.show()
-    
-    return(inte)
-	
+
+#    return(Intt)
+
 if __name__ == '__main__':
-	filename = 'results_slc 2/file_0001.txt'
+	filename = 'results_slc3/*.txt'
 	sizePhi = 720
 
 
@@ -165,5 +191,4 @@ if __name__ == '__main__':
 	iBy = 4
 	iBz = 5
 
-	intwe = main()
-	
+	main()
