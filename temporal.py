@@ -28,21 +28,24 @@ class DifCoeficient(object):
     integPhi:
         Calculate the Fourier Series coefficients
     """
+
     def __init__(self, filename, RVal, TimeStep):
-        self.name = filename
-        self.radius = RVal
-        self.tStep = TimeStep
+        self.name = filename # all the directory
+        self.radius = RVal # raduial distance
+        self.tStep = TimeStep # Simulation time step
 
 
     def read(self):
     	#read from file
         # faz a leitura de todos os arquivos da pasta
         files = glob.glob(self.name)
-        files.sort()
+        files.sort() # sort the filenames
         self.inputArray = []
         # armazena em uma lista os data frames para cada passo temporal
         for i in files:
+	    # data frame temporário contedo todos os dados
             Array = pd.DataFrame(np.loadtxt(i), columns=['x', 'y', 'R', 'phi', 'ex', 'ey', 'ez', 'bx', 'by', 'bz'])
+	    # lista de dataframes somente com os dados para o R selecionado
             self.inputArray.append(Array[Array['R'] == self.radius])
 
 
@@ -56,10 +59,12 @@ class DifCoeficient(object):
 
 
         self.fields = []
+	# loop in the fataframes od the timesteps
         for k in self.inputArray:
+	    # temporary data frame for the new rotate fields
             tempFields = pd.DataFrame(np.zeros((len(['x']), 8)),columns=['bp', 'ba', 'br', 'v1p', 'v1a', 'v1r', 'b_fac', 'b_orig'])
-
-            x = k['x'].values
+            # Extract the original data components
+            x = k['x'].values 
             y = k['y'].values
             z = np.zeros((len(k['x']), 1))
             v1x = k['ex'].values
@@ -68,8 +73,7 @@ class DifCoeficient(object):
             bx = k['bx'].values
             by = k['by'].values
             bz = k['bz'].values
-
-            # v1p = v1a = v1r = bp = ba = br = r =  b_fac = b_orig = np.zeros((len(x)))
+	
             for i in range(0,len(x)):
                 r  = [x[i], y[i], z[i]] / np.sqrt(x[i] * x[i] + y[i] * y[i] + z[i] * z[i])
                 ep = [bx[i], by[i], bz[i]] / np.sqrt(bx[i] * bx[i] + by[i] * by[i] + bz[i] * bz[i])
