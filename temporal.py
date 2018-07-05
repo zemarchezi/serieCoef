@@ -66,7 +66,7 @@ class DifCoeficient(object):
         for k in self.inputArray:
 	    # temporary data frame for the new rotate fields
 	    ## mantive os mesmos nomes das variáveis que estavam na rotina do vitor. v1p, v1a, v1r, são e_paralelo, e_azimutal(ephi), e_radial
-            tempFields = pd.DataFrame(np.zeros((len(['x']), 8)),columns=['bp', 'ba', 'br', 'v1p', 'v1a', 'v1r', 'b_fac', 'b_orig'])
+            tempFields = pd.DataFrame(np.zeros((len(k['x']), 8)),columns=['bp', 'ba', 'br', 'v1p', 'v1a', 'v1r', 'b_fac', 'b_orig'])
             # Extract the original data components
             x = k['x'].values 
             y = k['y'].values
