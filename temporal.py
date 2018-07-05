@@ -62,6 +62,7 @@ class DifCoeficient(object):
 	# loop in the fataframes od the timesteps
         for k in self.inputArray:
 	    # temporary data frame for the new rotate fields
+	    ## mantive os mesmos nomes das variáveis que estavam na rotina do vitor. v1p, v1a, v1r, são e_paralelo, e_azimutal(ephi), e_radial
             tempFields = pd.DataFrame(np.zeros((len(['x']), 8)),columns=['bp', 'ba', 'br', 'v1p', 'v1a', 'v1r', 'b_fac', 'b_orig'])
             # Extract the original data components
             x = k['x'].values 
@@ -73,9 +74,13 @@ class DifCoeficient(object):
             bx = k['bx'].values
             by = k['by'].values
             bz = k['bz'].values
+		
+	    # 'p', 'a', e, 'r', denotam as variáveis na direção paralela, azimutal(phi) e radial
 	
             for i in range(0,len(x)):
                 r  = [x[i], y[i], z[i]] / np.sqrt(x[i] * x[i] + y[i] * y[i] + z[i] * z[i])
+		# mais uma ves, mantive os mesmos nomes
+		## esses índices referem-se aos vetores unitários nessas direçes.
                 ep = [bx[i], by[i], bz[i]] / np.sqrt(bx[i] * bx[i] + by[i] * by[i] + bz[i] * bz[i])
                 ea  = np.cross(ep, r) / np.linalg.norm(np.cross(ep, r))
                 er  = np.cross(ea, ep) / np.linalg.norm(np.cross(ea, ep))
